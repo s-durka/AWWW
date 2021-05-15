@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Delete file</title>
+    </head>
+    <body>
+        <h1>Choose file to delete:</h1> 
+        <a href="/">back to main page</a>
+        <form method=POST>
+            {% csrf_token %}
+            {% for file in files %}
+                <input type="radio" name="file_to_delete" id="file{{ forloop.counter }}" value="{{ file.id }}">
+                <label for="file{{ forloop.counter }}">{{ file }}</label><br>
+            {% endfor %}
+            <input type='submit' value='Delete'>
+        </form>
+    </body>
+
+</html>

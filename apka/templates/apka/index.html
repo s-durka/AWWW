@@ -1,0 +1,74 @@
+{% extends 'apka/base.html' %}
+
+{% block upper_menu%}
+<a class="button" href="upload_file" style="text-decoration: none">Add File</a>
+<a class="button" href="upload_directory" style="text-decoration: none">Add Folder</a>
+<a class="button" href="delete_file" style="text-decoration: none">Delete File</a>
+<a class="button" href="delete_directory" style="text-decoration: none">Delete Directory</a>
+<form class="button" method=POST>
+    {% csrf_token %}
+    <input type='submit' name="run" value="Run">
+</form>
+{% endblock upper_menu %}
+
+{% block file_selection %}
+    {% include "apka/show_folders.html" with tree=tree free_files=free_files %}
+{% endblock file_selection %}
+
+{% block tabs %}
+
+<form method="POST">
+    {%csrf_token %}
+    <button name="tab" value="1">Provers</button>
+    <button name="tab" value="2">VCs</button>
+    <button name="tab" value="3">Result</button>
+</form>
+
+{% endblock tabs %}
+
+{% block code %}
+    {% if file != None %}
+        <h3>{{file.name}}</h3>
+            {%if file.description%}
+                <p>Description: {{file.description}}</p>
+            {% endif %}    
+            <!-- <p>Created: {{file.creation_date}}</p> -->
+            <pre>{{file.display_text}}</pre>
+        {% endif %}
+{% endblock code %}
+
+
+{% block tab_data %}
+    {% if tab == '1' %}
+        <form action = "" method = "post">
+            {% csrf_token %}
+            {{ prover_form }}
+            <input type="submit" name="submit_prover" value="Submit">
+        </form>
+    {% elif tab == '2' %}
+        <form action = "" method = "post">
+            {% csrf_token %}
+            {{ vc_form }}
+            <input type="submit" name="submit_vc" value="Submit">
+        </form>
+    {% elif tab == '3' %}
+        {% if file != None %}
+             <pre> {{ file.frama_result }} </pre>
+        {% endif %}
+    {% endif %}
+{% endblock tab_data %}
+
+{% block program_elements %}
+    {% for section in file.filesection_set.all %}
+        {% if section.status_data_fk.validity_flag and section.status_data_fk.status_data != "" %}
+            <div class={{section.status_fk.status}}>
+                <p>Prover: {{section.status_data_fk.prover }}</p>
+                <div class="status">{{section.status_data_fk.status_data|linebreaks}}
+                    <span class="statustext">
+                        line: {{section.line}}{{section.desc|linebreaks}}
+                    </span>
+                </div>
+            </div>
+        {%endif%}    
+{% endfor %}
+{% endblock program_elements %}

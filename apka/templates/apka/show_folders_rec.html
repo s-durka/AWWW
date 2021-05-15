@@ -1,0 +1,21 @@
+{% if tree.dir.is_available == True %}
+<ul>
+    <li>
+        <details open><summary>{{tree.dir.name}}</summary>
+            {% for node in tree.children %}
+                {% include "apka/show_folders_rec.html" with tree=node %}     
+            {% endfor %}
+        
+            {% for f in tree.files %}
+                {% if f.is_available %}
+                    <li> <form method=POST>
+                        {% csrf_token %}
+                        <button type="submit" name="file_id" value={{f.pk}}>📄{{f.name}}</button>
+                    </form>
+                    </li>
+                {% endif %}    
+            {% endfor %}
+        </details>
+    </li>
+</ul>
+{% endif %}

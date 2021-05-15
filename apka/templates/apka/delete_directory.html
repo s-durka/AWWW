@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Delete directory</title>
+    </head>
+    <body>
+        <h1>Choose directory to delete:</h1> 
+        <a href="/">back to main page</a>
+        <form method=POST>
+            {% csrf_token %}
+            {% for directory in directories %}
+                <input type="radio" name="directory_to_delete" id="directory{{ forloop.counter }}" value="{{ directory.id }}">
+                <label for="directory{{ forloop.counter }}">{{ directory }}</label><br>
+            {% endfor %}
+            <input type='submit' value='Delete'>
+        </form>
+    </body>
+
+</html>

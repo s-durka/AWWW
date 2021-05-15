@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pl">
+    <head>
+        <title>Main page</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+        <meta charset="UTF-8">
+
+        {% load static %}
+        <link rel="stylesheet" type="text/css" href="{% static 'apka/style.css' %}">
+
+    </head>
+    <body class="theme1">
+        <nav class="upper-nav">
+            {% block upper_menu %}
+
+            <div>link 1</div>
+            <div>link 2</div>
+            <div>link 3</div>
+            <div>link 4</div>
+
+            {% endblock upper_menu %}
+
+        </nav>
+        <nav class="side-nav">
+            {% block file_selection %}
+
+            {% endblock file_selection %}
+
+        </nav>
+        <div class="container">
+            <div class="left-item">
+                {% block code %}
+                <pre><code>
+#include &lt;iostream&gt;
+#include &lt;set&gt;
+    
+int main() {
+    std::ios_base::sync_with_stdio(false);
+
+    int n, m;
+    std::cin &gt;&gt; n;
+    std::cin &gt;&gt; m;
+
+    std::set&lt;int&gt; first;
+    std::set&lt;int&gt; second;
+
+    for (int i = 0; i &lt; m; i++) {
+        int from, to;
+        char sign;
+        std::cin &gt;&gt; sign;
+        std::cin &gt;&gt; from;
+        std::cin &gt;&gt; to;
+
+        if (sign == &#39;+&#39;) {
+            if (from == 1) {
+                first.insert(to);
+            }
+            else {
+                second.insert(from);
+            }
+        }
+        else if (sign == &#39;-&#39;) {
+            if (from == 1) {
+                first.erase(to);
+            }
+            else {
+                second.erase(from);
+            }
+        }
+        int max_left = 0;
+        int min_right = n+1;
+        if (!first.empty())
+            max_left = *first.rbegin();
+        if (!second.empty()) {
+            min_right = *second.begin();
+        }
+        if (min_right &lt;= max_left)
+            std::cout &lt;&lt; 0 &lt;&lt; &quot;\n&quot;;
+        else {
+            std::cout &lt;&lt; min_right - max_left - 1;
+            std::cout &lt;&lt; &quot;\n&quot;;
+        }
+    }
+    return 0;
+}                        
+            
+            </code></pre>
+            {% endblock code %}
+
+            </div>
+            <div class="right-item">
+                {% block program_elements %}
+
+                <p>Focus on program elements</p>
+                {% endblock program_elements %}
+
+            </div>
+            <div class="bottom-item">
+                <div class = "tabs">
+                    {% block tabs %}
+                    <div>tab1</div>
+                    <div>tab2</div>
+                    <div>tab3</div>
+                    <div>tab4</div>
+                    {% endblock tabs %}
+                </div>
+                <div>
+                    {% block tab_data %}
+                    <p>tab data</p>
+                    <p>tab data</p>
+                    {% endblock tab_data %}
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

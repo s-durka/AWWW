@@ -1,0 +1,255 @@
+* {
+  box-sizing: border-box;
+  font-family: 'Arial';
+
+}
+
+.theme1 {
+    --main-color: #FAF9F9;
+    --second-color: #7DAFAF;
+    --fourth-color: #97D1E4;
+    --third-color: #478AB5;
+    --dark-bg: #222437;
+    --special-text-color: #282f52;
+    --syntax-highlight-color: rgb(236, 85, 110);
+}
+
+
+.theme2 {
+  --main-color: rgb(130, 139, 0);
+  --second-color: lightblue;
+  --third-color: darkgreen;
+  --fourth-color: rgb(22, 192, 121);
+  --dark-bg: #222437;
+  --special-text-color: yellow;
+  --syntax-highlight-color: rgb(236, 85, 110);
+}
+
+html, body {
+    background-color: var(--main-color);
+    width: 100%;
+    height: 100%;
+    font-size: 100%;
+    margin: 0;
+}
+details > summary {
+  list-style-type: none;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+details > summary::before {
+  content: '📁';
+}
+
+details[open] > summary::before {
+  content: '📂';
+}
+
+details {
+  border-radius: 0.2rem;
+  padding: 0.2rem;
+}
+
+button {
+  margin: 0.3rem;
+}
+
+details[open] > summary {
+  margin-bottom: 0.5rem;
+}
+
+ul {
+  list-style: none;
+}
+
+.syntax {
+    color: var(--syntax-highlight-color);
+}
+
+nav.upper-nav {
+    display: flex;
+    height: 10%;
+    flex-wrap: wrap;
+    align-content: space-around;
+    width: 100%;
+    background-color: var(--second-color);
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+    outline: none;
+}
+/* nav.upper-nav input[type=submit] {
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  padding: 16px 32px;
+  text-decoration: none;
+  margin: 4px 2px;
+  cursor: pointer;
+} */
+nav.upper-nav a,nav.upper-nav button, input[type=submit] {
+  background-color: var(--fourth-color);
+  text-align: center;
+  margin: 10px;
+  padding: 10px;
+  border-radius: 25px;
+}
+
+nav.side-nav > ul, li, div {
+  background-color: none;
+}
+
+
+nav.side-nav > div {
+  text-align: center;
+  margin: 10px;
+  padding: 10px;
+  border-radius: 25px;
+  background-color: var(--first-color);
+}
+
+nav li {
+  color: white;
+}
+
+.container {
+  height: 90%;
+  display: grid;
+  grid-template-columns: [line1] auto [line2] 35% [line3];
+  grid-template-rows: [row1-start] auto [row1-end] 25% [row2-end];
+  grid-template-areas:
+      "left right"
+      "bottom bottom";
+}
+
+.left-item {
+    padding: 15px;
+    background-color: var(--main-color);
+    grid-area: left;
+    overflow: auto;
+}
+
+.right-item {
+      background-color: var(--third-color);
+      grid-area: right;
+      overflow: auto;
+}
+.bottom-item {
+    display: flex;
+    flex-wrap: nowrap;
+    flex-direction: column;
+    background-color: var(--second-color);
+    grid-area: bottom;
+    overflow-y: auto;
+}
+
+.tabs button {
+  background-color: var(--fourth-color);
+  text-align: center;
+  margin: 10px;
+  padding: 10px;
+  border-radius: 25px;
+}
+
+.tabs {
+  display: flex;
+  align-items: flex-start;
+}
+
+.tabs > div {
+    text-align: center;
+    margin: 10px;
+    padding: 10px;
+    background-color: var(--second-color);
+}
+
+nav.side-nav {
+  color: var(--special-text-color);
+  float: left;
+  width: auto;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+  background-color: var(--dark-bg);
+  height: 90%;
+  grid-area: sidenav;
+}
+
+@media screen and (max-width: 768px) {
+  /* For mobile phones: */
+  nav.side-nav, nav.upper-nav, .container {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+  }
+
+  .container {
+      display: grid;
+      grid-template-columns: [line1] auto [line2];
+      grid-template-rows: [row1-start] 60% [row1-end] auto [row2-end] 30% ;
+      grid-template-areas:
+          "left"
+          "bottom"
+          "bottom2"
+          ;
+    }
+    .right-item {
+      grid-area: bottom2;
+      background-color: var(--third-color);
+      width: 100%;
+  }
+}
+
+.proved {
+  background-color: green;
+}
+.valid {
+  background-color: rgb(73, 184, 0);
+}
+
+
+.invalid, .failed {
+  background-color: rgb(218, 63, 43);
+}
+
+.counterexample {
+  background-color: tomato;
+}
+
+.unchecked {
+  background-color: orange;
+}
+
+.unknown {
+  background-color:rgb(149, 188, 190);
+}
+.timeout {
+  background-color:rgb(209, 180, 15);
+}
+
+.status {
+  font-family: "serif";
+  font-size: 15px;
+  position: relative;
+  display: inline-block;
+}
+
+.status .statustext {
+  visibility: hidden;
+  background-color: black;
+  color: white;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+}
+
+.status:hover .statustext {
+  visibility: visible;
+}
