@@ -9,6 +9,8 @@ import subprocess
 from subprocess import Popen
 from django.utils import timezone
 from django.http import JsonResponse
+from django.core import serializers
+import json
 
 
 def add_sections(obj):
@@ -81,23 +83,13 @@ def open_file(request):
     request.session['file_id'] = file_pk        
     return {'file': current_file}
 
-
-def upload_file(request):
-    if request.method == "POST":
-        form = UploadFileModelForm(request.POST, request.FILES)
-        if form.is_valid():
-            file_obj = form.save()
-            add_sections(file_obj)
-    form = UploadFileModelForm()
-    return render(request, 'apka/upload.html', {'form':form})    
-
-def upload_folder(request):
-    if request.method == "POST":
-        form = UploadDirectoryModelForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-    form = UploadDirectoryModelForm()
-    return render(request, 'apka/upload_directory.html', {'form':form}) 
+# def upload_folder(request):
+#     if request.method == "POST":
+#         form = UploadDirectoryModelForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             form.save()
+#     form = UploadDirectoryModelForm()
+#     return render(request, 'apka/upload_directory.html', {'form' : form}) 
 
 def delete_file(request):
     files = File.objects.filter(is_available=True)
@@ -155,6 +147,31 @@ def get_directory_tree(directory):
         'children': [get_directory_tree(child) for child in children],
         'files': files_in_dir,
     }
+
+def get_directory_tree_serialized(directory):
+    children = directory.directory_set.all()
+    files_in_dir = directory.file_set.all()
+
+    ser_files = serializers.serialize('json', files_in_dir, 
+        fields=('name', 'desc', 'frama_result', 'owner', 'is_available', 'directory')
+        )
+    ser_dir = serializers.serialize('json', [directory,])
+    ser_dir = ser_dir[1:-1]
+    print('ser dir:', ser_dir)
+    print('loads:', json.loads(ser_dir))
+
+    if not children:
+        # this folder has no children, recursion ends here
+        return {'dir': json.loads(ser_dir), 'children': serializers.serialize('json', []), 'files': ser_files}
+
+    # else, this folder has children, get every child's directory_tree
+    return {
+        'dir': json.loads(ser_dir),
+        'children': [get_directory_tree_serialized(child) for child in children], # serialized
+        'files': ser_files,
+    }
+
+
 
 def tabs(request):
     vc_list = []
@@ -232,11 +249,7 @@ def run_frama(request):
                 sec.status_fk.status = status_line[0][1].lower()
                 sec.status_fk.save()
 
-def index(request):
-    print("INDEX")
-    context = {}
-    if request.method == "POST" and 'run' in request.POST:
-        run_frama(request)
+def create_dir_structure(request):
     dir_tree_list = []
     root_dirs = Directory.objects.filter(parent_dir=None)
     parentless_files = File.objects.filter(directory=None)
@@ -244,11 +257,105 @@ def index(request):
         directory_tree = get_directory_tree(r_dir)
         dir_tree_list.append(directory_tree)
 
-    context.update({'free_files' : parentless_files})
-    context.update({'tree_list' : dir_tree_list})
+    return {'free_files' : parentless_files, 'tree_list' : dir_tree_list}
+
+def create_dir_structure_serialized(request):
+    dir_tree_list = []
+    root_dirs = Directory.objects.filter(parent_dir=None)
+    parentless_files = File.objects.filter(directory=None)
+    ser_parentless_files = serializers.serialize('json', parentless_files, 
+        fields=('name', 'desc', 'frama_result', 'owner', 'is_available', 'directory')
+        )
+
+    for r_dir in root_dirs:
+        directory_tree = get_directory_tree_serialized(r_dir)
+        dir_tree_list.append(directory_tree)
+        
+
+    print("REAL dictionary:", {'free_files' : ser_parentless_files, 'tree_list' : dir_tree_list})
+    return {'free_files' : ser_parentless_files, 'tree_list' : dir_tree_list}
+
+# def upload_file(request):
+#     if request.method == "POST":
+#         form = UploadFileModelForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             file_obj = form.save()
+#             add_sections(file_obj)
+#     form = UploadFileModelForm()
+#     return render(request, 'apka/upload.html', {'form':form})    
+# def upload_file(request):
+#     if request.is_ajax and request.method == "POST":
+#         #get the form data 
+#         form = UploadFileModelForm(request.POST, request.FILES)
+#         print(form)
+#         if form.is_valid():
+#             print("valid\n")
+#             file_obj = form.save() # TODO ODKOMENTUJ
+#             add_sections(file_obj) # TODO ODKOMENTUJ DEBUG
+#             dict = create_dir_structure_serialized(request)
+#             print(dict['free_files'])
+#             print('\n\ntree list:\n')
+#             print(dict['tree_list'])
+#             print('\n\n')
+#             #jsonn = json.dumps(create_dir_structure_serialized(request))
+#             #print(jsonn)
+
+#             # return render(request, 'show_folders.html', context)
+#             return JsonResponse(create_dir_structure_serialized(request), safe=False)
+#         else:
+#             return JsonResponse({'ulala' : 'siabadabadu', 'message' : 'huhuhuhu'})
+
+def upload_file(request):
+    if request.is_ajax and request.method == "POST":
+        #get the form data 
+        form = UploadFileModelForm(request.POST, request.FILES)
+        if form.is_valid():
+            print("valid\n")
+            form.save()
+            add_sections(file_obj)
+            context = create_dir_structure(request)
+            return render(request, 'apka/show_folders.html', context)
+
+def upload_folder(request):
+    if request.is_ajax and request.method == "POST":
+        form = UploadDirectoryModelForm(request.POST, request.FILES)
+        if form.is_valid():
+            print("valid!!!\n")
+            form.save()
+            context = create_dir_structure(request)
+            return render(request, 'apka/show_folders.html', context) 
+        else:
+            print("not valid\n")
+
+
+
+def index(request):
+    print("INDEX")
+    context = {}
+    if request.method == "POST" and 'run' in request.POST:
+        run_frama(request)
+    # dir_tree_list = []
+    # root_dirs = Directory.objects.filter(parent_dir=None)
+    # parentless_files = File.objects.filter(directory=None)
+    # for r_dir in root_dirs:
+    #     directory_tree = get_directory_tree(r_dir)
+    #     dir_tree_list.append(directory_tree)
+
+    # context.update({'free_files' : parentless_files})
+    # context.update({'tree_list' : dir_tree_list})
+    context.update(create_dir_structure(request))
     context.update(open_file(request))
     context.update(choose_tab(request))
     context.update(tabs(request))
+
+    file_form = UploadFileModelForm()
+    folder_form = UploadDirectoryModelForm(request.POST, request.FILES)
+
+    context.update({'upload_file_form': file_form, 'upload_folder_form' : folder_form})
+    
+    upload_file(request)
+
+
             
     response = render(request, 'apka/index.html', context)
     response.set_cookie('tab', context['tab'])

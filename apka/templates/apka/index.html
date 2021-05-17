@@ -1,8 +1,13 @@
 {% extends 'apka/base.html' %}
 
+{% block style %}
+
+{% endblock style %}
+
 {% block upper_menu%}
-<a class="button" href="upload_file" style="text-decoration: none">Add File</a>
-<a class="button" href="upload_directory" style="text-decoration: none">Add Folder</a>
+<!-- <a class="button" href="upload_file" style="text-decoration: none">Add File</a> -->
+<button class="button" onclick="openUploadFileForm()" style="text-decoration: none">Add File</button>
+<button class="button" onclick="openUploadFolderForm()" style="text-decoration: none">Add Folder</button>
 <a class="button" href="delete_file" style="text-decoration: none">Delete File</a>
 <a class="button" href="delete_directory" style="text-decoration: none">Delete Directory</a>
 <form class="button" method=POST>
@@ -72,3 +77,92 @@
         {%endif%}    
 {% endfor %}
 {% endblock program_elements %}
+
+{% block popups %}
+<div class="form-popup" id="uploadFileDiv">
+    <b>Upload a new file:</b>
+    <form id="uploadFileForm" class="form-container" method="post" action="{% url 'upload_file' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{upload_file_form.as_p}}
+            <button id='run_upload_file' class='btn'> upload </button>
+        </form>
+
+        <button type="button" class="btn cancel" onclick="closeUploadFileForm()">close form</button>
+</div>
+
+<div class="form-popup" id="uploadFolderDiv">
+    <b>Upload a new folder:</b>
+    <form id="uploadFolderForm" class="form-container" method="post" action="{% url 'upload_folder' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{upload_folder_form.as_p}}
+            <button id='run_upload_folder' class='btn'> upload </button>
+        </form>
+
+        <button type="button" class="btn cancel" onclick="closeUploadFolderForm()">close form</button>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type="text/javascript">
+    function openUploadFileForm() {
+        document.getElementById("uploadFileDiv").style.display = "block";
+    }
+    function closeUploadFileForm() {
+        document.getElementById("uploadFileDiv").style.display = "none";
+    }
+
+    function openUploadFolderForm() {
+        document.getElementById("uploadFolderDiv").style.display = "block";
+    }
+    function closeUploadFolderForm() {
+        document.getElementById("uploadFolderDiv").style.display = "none";
+    }
+
+    $("#uploadFolderForm").submit(function(event){
+        event.preventDefault();
+        $.post(
+            $(this).attr('action'), 
+            $(this).serialize(),
+            function (response) {
+                // log the result
+                $(".side-nav").html(response);
+            })
+    })
+
+    $('#uploadFileForm').submit(function(e) {
+        e.preventDefault();
+        $form = $(this)
+        var formData = new FormData(this);
+        $.ajax({
+            url: $('#uploadFileForm').attr('action'),
+            type: 'POST',
+            data: formData,
+            success: function (response) {
+                $(".side-nav").html(response);
+            },
+            cache: false,
+            contentType: false,
+            processData: false,
+            headers: {
+                "X-CSRFToken": '{{ csrf_token }}'
+            },
+            enctype: 'multipart/form-data'
+        })
+    });
+    // function runUploadFileForm() {
+    //     var myForm = document.getElementById('uploadFileForm');
+    //     var formData = new FormData(myForm);
+    //     $.post(
+    //         $('#uploadFileForm').attr('action'), 
+    //         $('#uploadFileForm').serialize(),
+    //         function (data) {
+    //             // log the result
+    //             // $(".side-nav").html(data);
+    //             alert("ALERT");
+    //         })
+    // }
+
+// $("#run_upload_file").click(runUploadFileForm());
+    
+</script>
+
+{% endblock popups %}

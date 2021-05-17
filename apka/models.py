@@ -21,7 +21,6 @@ class Directory(models.Model):
     parent_dir = models.ForeignKey('self', blank=True, null=True, default=None, on_delete=models.CASCADE)
     
     last_updated = models.DateTimeField(auto_now=True)
-    validity_flag = models.BooleanField(default=True)
     def __str__(self):
         current_dir = self
         parents_list = []
@@ -46,7 +45,6 @@ class File(models.Model):
     directory = models.ForeignKey(Directory, blank=True, null=True, default=None, on_delete=models.CASCADE)
     is_available = models.BooleanField(default=True) 
     last_updated = models.DateTimeField(auto_now = True)
-    validity_flag = models.BooleanField(default=True)
     def display_text(self):
         self.file_field.open('r')
         return self.file_field.read()
