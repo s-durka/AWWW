@@ -8,25 +8,16 @@
         {% load static %}
         <link rel="stylesheet" type="text/css" href="{% static 'apka/style.css' %}">
         <link rel="stylesheet" type="text/css" href="{% static 'apka/popup_style.css' %}">
-
-        {% block style %}
-        {% endblock style %}
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     </head>
     <body class="theme1">
         <nav class="upper-nav">
             {% block upper_menu %}
-
-            <div>link 1</div>
-            <div>link 2</div>
-            <div>link 3</div>
-            <div>link 4</div>
-
             {% endblock upper_menu %}
 
         </nav>
         <nav id="side" class="side-nav">
             {% block file_selection %}
-
             {% endblock file_selection %}
 
         </nav>
@@ -37,24 +28,16 @@
             </div>
             <div class="right-item">
                 {% block program_elements %}
-
-                <p>Focus on program elements</p>
                 {% endblock program_elements %}
 
             </div>
             <div class="bottom-item">
                 <div class = "tabs">
                     {% block tabs %}
-                    <div>tab1</div>
-                    <div>tab2</div>
-                    <div>tab3</div>
-                    <div>tab4</div>
                     {% endblock tabs %}
                 </div>
                 <div>
                     {% block tab_data %}
-                    <p>tab data</p>
-                    <p>tab data</p>
                     {% endblock tab_data %}
                 </div>
             </div>

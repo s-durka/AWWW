@@ -1,15 +1,11 @@
 {% extends 'apka/base.html' %}
 
-{% block style %}
-
-{% endblock style %}
-
 {% block upper_menu%}
 <!-- <a class="button" href="upload_file" style="text-decoration: none">Add File</a> -->
 <button class="button" onclick="openUploadFileForm()" style="text-decoration: none">Add File</button>
 <button class="button" onclick="openUploadFolderForm()" style="text-decoration: none">Add Folder</button>
-<a class="button" href="delete_file" style="text-decoration: none">Delete File</a>
-<a class="button" href="delete_directory" style="text-decoration: none">Delete Directory</a>
+<button class="button" onclick="openDeleteFileForm()" style="text-decoration: none">Delete File</button>
+<button class="button" onclick="openDeleteFolderForm()" style="text-decoration: none">Delete Directory</button>
 <form class="button" method=POST>
     {% csrf_token %}
     <input type='submit' name="run" value="Run">
@@ -79,29 +75,15 @@
 {% endblock program_elements %}
 
 {% block popups %}
-<div class="form-popup" id="uploadFileDiv">
-    <b>Upload a new file:</b>
-    <form id="uploadFileForm" class="form-container" method="post" action="{% url 'upload_file' %}" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{upload_file_form.as_p}}
-            <button id='run_upload_file' class='btn'> upload </button>
-        </form>
 
-        <button type="button" class="btn cancel" onclick="closeUploadFileForm()">close form</button>
-</div>
+{% include "apka/upload_file.html" %}
 
-<div class="form-popup" id="uploadFolderDiv">
-    <b>Upload a new folder:</b>
-    <form id="uploadFolderForm" class="form-container" method="post" action="{% url 'upload_folder' %}" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{upload_folder_form.as_p}}
-            <button id='run_upload_folder' class='btn'> upload </button>
-        </form>
+{% include "apka/upload_directory.html" %}
 
-        <button type="button" class="btn cancel" onclick="closeUploadFolderForm()">close form</button>
-</div>
+{% include "apka/delete_directory.html" with directories=directories %}
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+{% include "apka/delete_file.html" with files=files %}
+
 <script type="text/javascript">
     function openUploadFileForm() {
         document.getElementById("uploadFileDiv").style.display = "block";
@@ -109,13 +91,43 @@
     function closeUploadFileForm() {
         document.getElementById("uploadFileDiv").style.display = "none";
     }
-
     function openUploadFolderForm() {
         document.getElementById("uploadFolderDiv").style.display = "block";
     }
     function closeUploadFolderForm() {
         document.getElementById("uploadFolderDiv").style.display = "none";
     }
+    function openDeleteFolderForm() {
+        document.getElementById("deleteFolderDiv").style.display = "block";
+    }
+    function closeDeleteFolderForm() {
+        document.getElementById("deleteFolderDiv").style.display = "none";
+    }
+    function openDeleteFileForm() {
+        document.getElementById("deleteFileDiv").style.display = "block";
+    }
+    function closeDeleteFileForm() {
+        document.getElementById("deleteFileDiv").style.display = "none";
+    }
+    $('#deleteFileForm').submit(function(event) {
+        event.preventDefault();
+        $.post(
+            $(this).attr('action'),
+            $(this).serialize(),
+            function (response) {
+                $(".side-nav").html(response);
+            });
+    })
+
+    $("#deleteFolderForm").submit(function(event){
+        event.preventDefault();
+        $.post(
+            $(this).attr('action'),
+            $(this).serialize(),
+            function (response) {
+                $(".side-nav").html(response);
+            });
+    })
 
     $("#uploadFolderForm").submit(function(event){
         event.preventDefault();

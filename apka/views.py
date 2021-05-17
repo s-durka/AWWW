@@ -91,24 +91,24 @@ def open_file(request):
 #     form = UploadDirectoryModelForm()
 #     return render(request, 'apka/upload_directory.html', {'form' : form}) 
 
-def delete_file(request):
-    files = File.objects.filter(is_available=True)
-    if request.method == "POST":
-        file_pk = request.POST.get('file_to_delete')
+# def delete_file(request):
+#     files = File.objects.filter(is_available=True)
+#     if request.method == "POST":
+#         file_pk = request.POST.get('file_to_delete')
 
-        file = File.objects.get(pk=file_pk)
-        file.is_available = False
-        file.save()
-    return render(request, 'apka/delete_file.html', {'files' : files})
+#         file = File.objects.get(pk=file_pk)
+#         file.is_available = False
+#         file.save()
+#     return render(request, 'apka/delete_file.html', {'files' : files})
 
-def delete_directory(request):
-    directories = Directory.objects.filter(is_available=True)
-    if request.method == "POST":
-        dir_pk = request.POST.get('directory_to_delete')
-        directory = Directory.objects.get(pk=dir_pk)
-        directory.is_available = False
-        directory.save()
-    return render(request, 'apka/delete_directory.html', {'directories' : directories})
+# def delete_directory(request):
+#     directories = Directory.objects.filter(is_available=True)
+#     if request.method == "POST":
+#         dir_pk = request.POST.get('directory_to_delete')
+#         directory = Directory.objects.get(pk=dir_pk)
+#         directory.is_available = False
+#         directory.save()
+#     return render(request, 'apka/delete_directory.html', {'directories' : directories})
 
 # def choose_tab(request):
 #     current_tab = '1'
@@ -327,22 +327,34 @@ def upload_folder(request):
         else:
             print("not valid\n")
 
+def delete_folder(request):
+    if request.is_ajax and request.method == "POST":
+        dir_pk = request.POST.get('directory_to_delete')
+        directory = Directory.objects.get(pk=dir_pk)
+        directory.is_available = False
+        directory.save()
+        context = create_dir_structure(request)
+        return render(request, 'apka/show_folders.html', context)
 
+def delete_file(request):
+    if request.is_ajax and request.method == "POST":
+        file_pk = request.POST.get('file_to_delete')
+        file = File.objects.get(pk=file_pk)
+        file.is_available = False
+        file.save()
+        context = create_dir_structure(request)
+        return render(request, 'apka/show_folders.html', context)
+
+# def render_file_form(request):
+#     file_form = UploadFileModelForm()
+#     return 
 
 def index(request):
     print("INDEX")
     context = {}
     if request.method == "POST" and 'run' in request.POST:
         run_frama(request)
-    # dir_tree_list = []
-    # root_dirs = Directory.objects.filter(parent_dir=None)
-    # parentless_files = File.objects.filter(directory=None)
-    # for r_dir in root_dirs:
-    #     directory_tree = get_directory_tree(r_dir)
-    #     dir_tree_list.append(directory_tree)
 
-    # context.update({'free_files' : parentless_files})
-    # context.update({'tree_list' : dir_tree_list})
     context.update(create_dir_structure(request))
     context.update(open_file(request))
     context.update(choose_tab(request))
@@ -350,8 +362,17 @@ def index(request):
 
     file_form = UploadFileModelForm()
     folder_form = UploadDirectoryModelForm(request.POST, request.FILES)
+    directories = Directory.objects.filter(is_available=True) # folders to show in delete form
+    files = File.objects.filter(is_available=True) #files to show in delete file form
 
-    context.update({'upload_file_form': file_form, 'upload_folder_form' : folder_form})
+
+
+    context.update({
+        'upload_file_form': file_form, 
+        'upload_folder_form' : folder_form, 
+        'directories' : directories,
+        'files' : files
+        })
     
     upload_file(request)
 

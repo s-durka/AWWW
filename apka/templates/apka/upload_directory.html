@@ -1,15 +1,9 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Add Directory</title>
-    </head>
-    <body>
-        <h1>Add a new directory</h1> 
-        <a href="/"> Back to main page</a>
-        <form method=POST enctype="multipart/form-data">
+<div class="form-popup" id="uploadFolderDiv">
+    <b>Add a new directory:</b>
+    <form id="uploadFolderForm" class="form-container" method="post" action="{% url 'upload_folder' %}" enctype="multipart/form-data">
             {% csrf_token %}
-            {{form.as_p}}
-            <input type='submit' value='Save'>
+            {{upload_folder_form.as_p}}
+            <button class="btn"> upload </button>
         </form>
-    </body>
-</html>
+        <button type="button" class="btn cancel" onclick="closeUploadFolderForm()">hide form</button>
+</div>
