@@ -1,15 +1,12 @@
 {% extends 'apka/base.html' %}
 
 {% block upper_menu%}
-<!-- <a class="button" href="upload_file" style="text-decoration: none">Add File</a> -->
 <button class="button" onclick="openUploadFileForm()" style="text-decoration: none">Add File</button>
-<button class="button" onclick="openUploadFolderForm()" style="text-decoration: none">Add Folder</button>
+<button class="button" onclick="openUploadFolderForm()" style="text-decoration: none">Add Directory</button>
 <button class="button" onclick="openDeleteFileForm()" style="text-decoration: none">Delete File</button>
 <button class="button" onclick="openDeleteFolderForm()" style="text-decoration: none">Delete Directory</button>
-<form class="button" method=POST>
-    {% csrf_token %}
-    <input type='submit' name="run" value="Run">
-</form>
+
+<button class="button" name="run" id="runFrama" onclick="runAndRenderFrama()"> Run </button>
 {% endblock upper_menu %}
 
 {% block file_selection %}
@@ -40,6 +37,7 @@
 
 
 {% block tab_data %}
+<div id="tab-data">
     {% if tab == '1' %}
         <form action = "" method = "post">
             {% csrf_token %}
@@ -57,32 +55,37 @@
              <pre> {{ file.frama_result }} </pre>
         {% endif %}
     {% endif %}
+</div>
 {% endblock tab_data %}
 
 {% block program_elements %}
-    {% for section in file.filesection_set.all %}
-        {% if section.status_data_fk.validity_flag and section.status_data_fk.status_data != "" %}
-            <div class={{section.status_fk.status}}>
-                <p>Prover: {{section.status_data_fk.prover }}</p>
-                <div class="status">{{section.status_data_fk.status_data|linebreaks}}
-                    <span class="statustext">
-                        line: {{section.line}}{{section.desc|linebreaks}}
-                    </span>
-                </div>
-            </div>
-        {%endif%}    
-{% endfor %}
+    {% include 'apka/program_elements.html' %}
 {% endblock program_elements %}
 
 {% block popups %}
 
-{% include "apka/upload_file.html" %}
+<div class="form-popup" id="uploadFileDiv">
+    {% include "apka/upload_file.html" %}
+</div>
 
-{% include "apka/upload_directory.html" %}
+<div class="form-popup" id="uploadFolderDiv">
+    {% include "apka/upload_directory.html" %}
+</div>
 
-{% include "apka/delete_directory.html" with directories=directories %}
+<div class="form-popup" id="deleteFolderDiv">
+    {% include "apka/delete_directory.html" with directories=directories %}
+</div>
 
-{% include "apka/delete_file.html" with files=files %}
+<div class="form-popup" id="deleteFileDiv">
+    <b>Choose a file to delete:</b>
+    <form id="deleteFileForm" class="form-container" method="post" action="{% url 'delete_file' %}">
+        <div id="deleteFileDivForm">
+        {% include "apka/delete_file.html" %}
+        </div>
+        <button class="btn">delete</button>
+    </form>
+    <button type="button" class="btn cancel" onclick="closeDeleteFileForm()">hide form</button>
+</div>
 
 <script type="text/javascript">
     function openUploadFileForm() {
@@ -109,6 +112,20 @@
     function closeDeleteFileForm() {
         document.getElementById("deleteFileDiv").style.display = "none";
     }
+
+   // $('#runFrama').onclick(runAndRenderFrama());
+
+    function runAndRenderFrama() {
+        $.post(
+            "{% url 'run_frama_ajax' %}",
+            {"csrfmiddlewaretoken": "{{ csrf_token }}"},
+            function (response) {
+                // alert(response["result_tab"]);
+                $(".right-item").html(response["focus"]);
+                $("#tab-data").html(response["result_tab"]);
+            });
+    }
+
     $('#deleteFileForm').submit(function(event) {
         event.preventDefault();
         $.post(
@@ -116,6 +133,13 @@
             $(this).serialize(),
             function (response) {
                 $(".side-nav").html(response);
+            });
+        var data = {"csrfmiddlewaretoken": "{{ csrf_token }}"};
+        $.post(
+            "{% url 'render_delete_file_form' %}",
+            data,
+            function(response) {
+                $("#deleteFileDivForm").html(response);
             });
     })
 
@@ -126,6 +150,13 @@
             $(this).serialize(),
             function (response) {
                 $(".side-nav").html(response);
+            });
+        var data = {"csrfmiddlewaretoken": "{{csrf_token }}"};
+        $.post(
+            "{% url 'render_delete_folder_form' %}",
+            data,
+            function(response) {
+                $("#deleteFolderDivForm").html(response);
             });
     })
 
@@ -138,6 +169,13 @@
                 // log the result
                 $(".side-nav").html(response);
             })
+        var data = {"csrfmiddlewaretoken": "{{ csrf_token }}"};
+        $.post(
+            "{% url 'render_folder_form' %}",
+            data,
+            function(response) {
+                $("#uploadFolderDivForm").html(response);
+            });
     })
 
     $('#uploadFileForm').submit(function(e) {
@@ -158,7 +196,14 @@
                 "X-CSRFToken": '{{ csrf_token }}'
             },
             enctype: 'multipart/form-data'
-        })
+        });
+        var data = {"csrfmiddlewaretoken": "{{ csrf_token }}"};
+        $.post(
+            "{% url 'render_file_form' %}",
+            data,
+            function(response) {
+                $("#uploadFileDivForm").html(response);
+            });
     });
     // function runUploadFileForm() {
     //     var myForm = document.getElementById('uploadFileForm');

@@ -11,5 +11,3 @@ admin.site.register(FileSection)
 admin.site.register(SectionCategory)
 admin.site.register(Status)
 admin.site.register(StatusData)
-admin.site.register(User)
-

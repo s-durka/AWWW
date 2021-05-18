@@ -1,22 +1,13 @@
 from django.db import models
+from django.contrib.auth.models import User
 import re
-
-class User(models.Model):
-    name = models.CharField(max_length=20)
-    login = models.CharField(max_length=20)
-    password = models.CharField(max_length=30)
-
-    last_updated = models.DateTimeField(auto_now=True)
-    validity_flag = models.BooleanField(default=True)
-    def __str__(self):
-        return self.name
 
 
 class Directory(models.Model):
     name = models.CharField(max_length=20)
-    desc = models.CharField(max_length=200)
+    desc = models.TextField(blank=True)
     creation_date = models.DateTimeField(auto_now_add=True)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     is_available = models.BooleanField(default=True)
     parent_dir = models.ForeignKey('self', blank=True, null=True, default=None, on_delete=models.CASCADE)
     
@@ -38,10 +29,10 @@ class File(models.Model):
     name = models.CharField(max_length=20)
     desc = models.TextField(blank=True)
     creation_date = models.DateTimeField(auto_now_add=True)
-    file_field = models.FileField(upload_to = 'user1')
+    file_field = models.FileField(upload_to = 'files')
     frama_result = models.TextField(blank=True)
 
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     directory = models.ForeignKey(Directory, blank=True, null=True, default=None, on_delete=models.CASCADE)
     is_available = models.BooleanField(default=True) 
     last_updated = models.DateTimeField(auto_now = True)

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="pl">
+    <head>
+        <title>login</title>
+    </head>
+    <body>
+        <h1>Login here</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{form.as_p}}
+            <button type="submit">Login</button>
+        </form>
+        <p>Don't have an account? Register <a href="/register">here</a></p>
+    </body>
+</html>

@@ -1,4 +1,3 @@
-<div class="form-popup" id="deleteFolderDiv">
     <b>Choose a directory to delete:</b>
     <form id="deleteFolderForm" class="form-container" method="post" action="{% url 'delete_folder' %}">
         {% csrf_token %}
@@ -9,4 +8,3 @@
         <button class="btn"> delete </button>
     </form>
     <button type="button" class="btn cancel" onclick="closeDeleteFolderForm()">hide form</button>
-</div>

@@ -1,9 +1,7 @@
-<div class="form-popup" id="uploadFolderDiv">
     <b>Add a new directory:</b>
     <form id="uploadFolderForm" class="form-container" method="post" action="{% url 'upload_folder' %}" enctype="multipart/form-data">
             {% csrf_token %}
-            {{upload_folder_form.as_p}}
+            <div id="uploadFolderDivForm">{{upload_folder_form.as_p}}</div>        
             <button class="btn"> upload </button>
         </form>
         <button type="button" class="btn cancel" onclick="closeUploadFolderForm()">hide form</button>
-</div>

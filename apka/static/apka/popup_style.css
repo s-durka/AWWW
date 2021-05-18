@@ -25,10 +25,11 @@
 
 /* Add styles to the form container */
 .form-container {
-  /* max-width: 500px; */
-  max-height: 90%;
+  width: 500px;
+  /* min-height: 400px; */
   padding: 10px;
   background-color: white;
+  overflow: auto;
 }
 
 /* Full-width input fields */
