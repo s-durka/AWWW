@@ -1,0 +1,11 @@
+    <!-- <b>Choose a file to delete:</b>
+    <form id="deleteFileForm" class="form-container" method="post" action="{% url 'delete_file' %}"> -->
+
+        <!-- {% csrf_token %} -->
+        {% for file in files %}
+            <input type="radio" name="file_to_delete" id="file{{ forloop.counter }}" value="{{ file.id }}">
+            <label for="file{{ forloop.counter }}">{{ file }}</label><br>
+        {% endfor %}
+        <!-- <button class="btn">delete</button>
+    </form>
+    <button type="button" class="btn cancel" onclick="closeDeleteFileForm()">hide form</button> -->

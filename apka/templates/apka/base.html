@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pl">
+    <head>
+        <title>Main page</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+        <meta charset="UTF-8">
+
+        {% load static %}
+        <link rel="stylesheet" type="text/css" href="{% static 'apka/style.css' %}">
+        <link rel="stylesheet" type="text/css" href="{% static 'apka/popup_style.css' %}">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    </head>
+    <body class="theme1">
+        <nav class="upper-nav">
+            {% block upper_menu %}
+            {% endblock upper_menu %}
+
+        </nav>
+        <nav id="side" class="side-nav">
+            {% block file_selection %}
+            {% endblock file_selection %}
+
+        </nav>
+        <div class="container">
+            <div class="left-item">
+                {% block code %}
+                {% endblock code %}
+            </div>
+            <div class="right-item">
+                {% block program_elements %}
+                {% endblock program_elements %}
+
+            </div>
+            <div class="bottom-item">
+                <div class = "tabs">
+                    {% block tabs %}
+                    {% endblock tabs %}
+                </div>
+                <div class="tab-data">
+                    {% block tab_data %}
+                    {% endblock tab_data %}
+                </div>
+            </div>
+        </div>
+        {% block popups %}
+        {% endblock popups %}
+    </body>
+</html>

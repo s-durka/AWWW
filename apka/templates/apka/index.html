@@ -1,0 +1,256 @@
+{% extends 'apka/base.html' %}
+
+{% block upper_menu%}
+<button class="button" onclick="openUploadFileForm()">Add File</button>
+<button class="button" onclick="openUploadFolderForm()">Add Directory</button>
+<button class="button" onclick="openDeleteFileForm()">Delete File</button>
+<button class="button" onclick="openDeleteFolderForm()" >Delete Directory</button>
+<button class="button" name="run" id="runFrama" onclick="runAndRenderFrama()"> Run </button>
+<a class="button" href="{% url 'logout' %}">log out</a>
+
+{% endblock upper_menu %}
+
+{% block file_selection %}
+    {% include "apka/show_folders.html" with tree=tree free_files=free_files %}
+{% endblock file_selection %}
+
+{% block tabs %}
+
+<form method="POST">
+    {%csrf_token %}
+    <button name="tab" value="1">Provers</button>
+    <button name="tab" value="2">VCs</button>
+    <button name="tab" value="3">Result</button>
+</form>
+
+{% endblock tabs %}
+
+{% block code %}
+    {% include 'apka/file_contents.html' %}
+{% endblock code %}
+
+
+{% block tab_data %}
+<div id="tab-data">
+    {% if tab == '1' %}
+        <form action = "" method = "post">
+            {% csrf_token %}
+            {{ prover_form }}
+            <input type="submit" name="submit_prover" value="Submit">
+        </form>
+    {% elif tab == '2' %}
+        <form action = "" method = "post">
+            {% csrf_token %}
+            {{ vc_form }}
+            <input type="submit" name="submit_vc" value="Submit">
+        </form>
+    {% elif tab == '3' %}
+        {% if file != None %}
+             <pre> {{ file.frama_result }} </pre>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock tab_data %}
+
+{% block program_elements %}
+    {% include 'apka/program_elements.html' %}
+{% endblock program_elements %}
+
+{% block popups %}
+
+<div class="form-popup" id="uploadFileDiv">
+    {% include "apka/upload_file.html" %}
+</div>
+
+<div class="form-popup" id="uploadFolderDiv">
+    {% include "apka/upload_directory.html" %}
+</div>
+
+<div class="form-popup" id="deleteFolderDiv">
+    <b>Choose a directory to delete:</b>
+    <form id="deleteFolderForm" class="form-container" method="post" action="{% url 'delete_folder' %}">
+        {% csrf_token %}
+        <div id="deleteFolderDivForm">
+            {% include "apka/delete_directory.html" with directories=directories %}
+        </div>
+        <button class="btn"> delete </button>
+    </form>
+    <button type="button" class="btn cancel" onclick="closeDeleteFolderForm()">hide form</button>
+</div>
+
+<div class="form-popup" id="deleteFileDiv">
+    <b>Choose a file to delete:</b>
+    <form id="deleteFileForm" class="form-container" method="post" action="{% url 'delete_file' %}">
+        {% csrf_token %}
+        <div id="deleteFileDivForm">
+        {% include "apka/delete_file.html" %}
+        </div>
+        <button class="btn">delete</button>
+    </form>
+    <button type="button" class="btn cancel" onclick="closeDeleteFileForm()">hide form</button>
+</div>
+
+<script type="text/javascript">
+    function openUploadFileForm() {
+        document.getElementById("uploadFileDiv").style.display = "block";
+    }
+    function closeUploadFileForm() {
+        document.getElementById("uploadFileDiv").style.display = "none";
+    }
+    function openUploadFolderForm() {
+        document.getElementById("uploadFolderDiv").style.display = "block";
+    }
+    function closeUploadFolderForm() {
+        document.getElementById("uploadFolderDiv").style.display = "none";
+    }
+    function openDeleteFolderForm() {
+        document.getElementById("deleteFolderDiv").style.display = "block";
+    }
+    function closeDeleteFolderForm() {
+        document.getElementById("deleteFolderDiv").style.display = "none";
+    }
+    function openDeleteFileForm() {
+        document.getElementById("deleteFileDiv").style.display = "block";
+    }
+    function closeDeleteFileForm() {
+        document.getElementById("deleteFileDiv").style.display = "none";
+    }
+
+   // $('#runFrama').onclick(runAndRenderFrama());
+
+    function runAndRenderFrama() {
+        $.post(
+            "{% url 'run_frama_ajax' %}",
+            {"csrfmiddlewaretoken": "{{ csrf_token }}"},
+            function (response) {
+                // alert(response["result_tab"]);
+                $(".right-item").html(response["focus"]);
+                $("#tab-data").html(response["result_tab"]);
+            });
+    }
+
+    function renderAllForms() {
+        $.post(
+            "{% url 'render_all_forms' %}",
+            {"csrfmiddlewaretoken": "{{ csrf_token }}"},
+            function (response) {
+                $("#uploadFileDivForm").html(response["upload_file"]),
+                $("#uploadFolderDivForm").html(response["upload_dir"]),
+                $("#deleteFileDivForm").html(response["delete_file"]),
+                $("#deleteFolderDivForm").html(response["delete_dir"])
+            });
+    }
+
+    $('#deleteFileForm').submit(function(event) {
+        event.preventDefault();
+        $.post(
+            $(this).attr('action'),
+            $(this).serialize(),
+            function (response) {
+                $(".side-nav").html(response);
+            });
+        var data = {"csrfmiddlewaretoken": "{{ csrf_token }}"};
+        $.post(
+            "{% url 'render_delete_file_form' %}",
+            data,
+            function(response) {
+                $("#deleteFileDivForm").html(response);
+            });
+    })
+
+    $("#deleteFolderForm").submit(function(event){
+        event.preventDefault();
+        $.post(
+            $(this).attr('action'),
+            $(this).serialize(),
+            function (response) {
+                $(".side-nav").html(response);
+            });
+        // var data = {"csrfmiddlewaretoken": "{{csrf_token }}"};
+        // $.post(
+        //     "{% url 'render_delete_folder_form' %}",
+        //     data,
+        //     function(response) {
+        //         $("#deleteFolderDivForm").html(response);
+        //     });
+        renderAllForms();
+    })
+
+    $("#uploadFolderForm").submit(function(event){
+        event.preventDefault();
+        $.post(
+            $(this).attr('action'), 
+            $(this).serialize(),
+            function (response) {
+                // log the result
+                $(".side-nav").html(response);
+            })
+        // var data = {"csrfmiddlewaretoken": "{{ csrf_token }}"};
+        // $.post(
+        //     "{% url 'render_folder_form' %}",
+        //     data,
+        //     function(response) {
+        //         $("#uploadFolderDivForm").html(response);
+        //     });
+        renderAllForms();
+    })
+
+    $('#uploadFileForm').submit(function(e) {
+        e.preventDefault();
+        $form = $(this)
+        var formData = new FormData(this);
+        $.ajax({
+            url: $('#uploadFileForm').attr('action'),
+            type: 'POST',
+            data: formData,
+            success: function (response) {
+                $(".side-nav").html(response);
+            },
+            cache: false,
+            contentType: false,
+            processData: false,
+            headers: {
+                "X-CSRFToken": '{{ csrf_token }}'
+            },
+            enctype: 'multipart/form-data'
+        });
+        var data = {"csrfmiddlewaretoken": "{{ csrf_token }}"};
+        $.post(
+            "{% url 'render_file_form' %}",
+            data,
+            function(response) {
+                $("#uploadFileDivForm").html(response);
+            });
+    });
+
+    function openFile(file_pk) {
+        $.post(
+            "{% url 'open_file_ajax' %}",
+            {"file_pk" : file_pk, "csrfmiddlewaretoken": "{{ csrf_token }}"},
+            function(response) {
+                $(".left-item").html(response['code']);
+                $(".right-item").html(response['program_elements']);
+                if(response['tab_num'] == '3') {
+                    $(".tab-data").html(response['tabs']);
+                }
+            }
+        );
+    }
+    // function runUploadFileForm() {
+    //     var myForm = document.getElementById('uploadFileForm');
+    //     var formData = new FormData(myForm);
+    //     $.post(
+    //         $('#uploadFileForm').attr('action'), 
+    //         $('#uploadFileForm').serialize(),
+    //         function (data) {
+    //             // log the result
+    //             // $(".side-nav").html(data);
+    //             alert("ALERT");
+    //         })
+    // }
+
+// $("#run_upload_file").click(runUploadFileForm());
+    
+</script>
+
+{% endblock popups %}

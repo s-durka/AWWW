@@ -1,0 +1,21 @@
+{% if tree.dir.is_available == True %}
+    <li>
+        <details open><summary>{{tree.dir.name}}</summary>
+            {% for node in tree.children %}
+                <input type="radio" name="to_delete" value="dir {{node.dir.pk}}"">{{node.dir.name}}
+
+                {% include "apka/show_folders_rec.html" with tree=node %}     
+            {% endfor %}
+        
+            {% for f in tree.files %}
+                {% if f.is_available %}
+                    <li> <form method=POST>
+                        {% csrf_token %}
+                        <button type="submit" name="delete" value={{f.pk}}>📄{{f.name}}</button>
+                    </form>
+                    </li>
+                {% endif %}    
+            {% endfor %}
+        </details>
+    </li>
+{% endif %}

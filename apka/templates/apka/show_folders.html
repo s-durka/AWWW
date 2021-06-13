@@ -1,0 +1,13 @@
+{% for tree in tree_list %}
+    {% include "apka/show_folders_rec.html" with tree=tree %}
+{% endfor %}
+
+<ul>
+{% for f in free_files %}
+    {% if f.is_available %}
+        <li> 
+            <button type="submit" name="file_id" value={{f.pk}} onclick=openFile(this.value)>📄{{f.name}} </button>
+        </li>
+    {% endif %}    
+{% endfor %}
+</ul>
