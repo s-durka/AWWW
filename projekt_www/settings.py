@@ -24,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'h4vfldt)otpqh)$(x@m$pl@tnrl=#n93xg^i0p_6ddk3n^iad$'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['students.mimuw.edu.pl', '127.0.0.1']
+DEBUG = False
+STATIC_ROOT = Path.home() / "nginx" / "static"
+ALLOWED_HOSTS = ['students.mimuw.edu.pl', 'localhost' '127.0.0.1']
 
 
 # Application definition
@@ -125,3 +125,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"

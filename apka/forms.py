@@ -7,20 +7,38 @@ from .models import Directory
     
 
 class UploadFileModelForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("owner")
+        super(UploadFileModelForm, self).__init__(*args, **kwargs)
+        self.fields['directory'] = forms.ModelChoiceField(
+            queryset=Directory.objects.filter(owner=user).exclude(is_available=False), 
+            required=False, 
+            empty_label="none")
     class Meta:
         model = File
-        fields = ['name', 'desc', 'file_field', 'directory', 'owner']
-        def __init__(self, *args, **kwargs):
-            super(UploadFileModelForm, self).__init__(*args, **kwargs)
-            self.fields['directory'] = forms.ModelChoiceField(queryset=Directory.objects.exclude(is_available=False))
+        fields = ['name', 'desc', 'file_field', 'directory']
+        labels = {
+            "file_field" : "File",
+            "desc" : "Description",
+        }
+    
 
 class UploadDirectoryModelForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("owner")
+        super(UploadDirectoryModelForm, self).__init__(*args, **kwargs)
+        self.fields['parent_dir'] = forms.ModelChoiceField(
+            queryset=Directory.objects.filter(owner=user).exclude(is_available=False), 
+            required=False, 
+            empty_label="none",
+            label="Path")
     class Meta:
         model = Directory
-        fields = ['name', 'desc', 'parent_dir', 'owner']
-        def __init__(self, *args, **kwargs):
-            super(UploadFileModelForm, self).__init__(*args, **kwargs)
-            self.fields['parent_dir'] = forms.ModelChoiceField(queryset=Directory.objects.exclude(is_available=False))
+        fields = ['name', 'desc', 'parent_dir']
+        labels= {
+            "desc" : "Description",
+        }
+    
 
 
 

@@ -1,15 +1,13 @@
 {% extends 'apka/base.html' %}
 
 {% block upper_menu%}
-<!-- <a class="button" href="upload_file" style="text-decoration: none">Add File</a> -->
-<button class="button" onclick="openUploadFileForm()" style="text-decoration: none">Add File</button>
-<button class="button" onclick="openUploadFolderForm()" style="text-decoration: none">Add Folder</button>
-<button class="button" onclick="openDeleteFileForm()" style="text-decoration: none">Delete File</button>
-<button class="button" onclick="openDeleteFolderForm()" style="text-decoration: none">Delete Directory</button>
-<form class="button" method=POST>
-    {% csrf_token %}
-    <input type='submit' name="run" value="Run">
-</form>
+<button class="button" onclick="openUploadFileForm()">Add File</button>
+<button class="button" onclick="openUploadFolderForm()">Add Directory</button>
+<button class="button" onclick="openDeleteFileForm()">Delete File</button>
+<button class="button" onclick="openDeleteFolderForm()" >Delete Directory</button>
+<button class="button" name="run" id="runFrama" onclick="runAndRenderFrama()"> Run </button>
+<a class="button" href="{% url 'logout' %}">log out</a>
+
 {% endblock upper_menu %}
 
 {% block file_selection %}
@@ -28,18 +26,12 @@
 {% endblock tabs %}
 
 {% block code %}
-    {% if file != None %}
-        <h3>{{file.name}}</h3>
-            {%if file.description%}
-                <p>Description: {{file.description}}</p>
-            {% endif %}    
-            <!-- <p>Created: {{file.creation_date}}</p> -->
-            <pre>{{file.display_text}}</pre>
-        {% endif %}
+    {% include 'apka/file_contents.html' %}
 {% endblock code %}
 
 
 {% block tab_data %}
+<div id="tab-data">
     {% if tab == '1' %}
         <form action = "" method = "post">
             {% csrf_token %}
@@ -57,32 +49,46 @@
              <pre> {{ file.frama_result }} </pre>
         {% endif %}
     {% endif %}
+</div>
 {% endblock tab_data %}
 
 {% block program_elements %}
-    {% for section in file.filesection_set.all %}
-        {% if section.status_data_fk.validity_flag and section.status_data_fk.status_data != "" %}
-            <div class={{section.status_fk.status}}>
-                <p>Prover: {{section.status_data_fk.prover }}</p>
-                <div class="status">{{section.status_data_fk.status_data|linebreaks}}
-                    <span class="statustext">
-                        line: {{section.line}}{{section.desc|linebreaks}}
-                    </span>
-                </div>
-            </div>
-        {%endif%}    
-{% endfor %}
+    {% include 'apka/program_elements.html' %}
 {% endblock program_elements %}
 
 {% block popups %}
 
-{% include "apka/upload_file.html" %}
+<div class="form-popup" id="uploadFileDiv">
+    {% include "apka/upload_file.html" %}
+</div>
 
-{% include "apka/upload_directory.html" %}
+<div class="form-popup" id="uploadFolderDiv">
+    {% include "apka/upload_directory.html" %}
+</div>
 
-{% include "apka/delete_directory.html" with directories=directories %}
+<div class="form-popup" id="deleteFolderDiv">
+    <b>Choose a directory to delete:</b>
+    <form id="deleteFolderForm" class="form-container" method="post" action="{% url 'delete_folder' %}">
+        {% csrf_token %}
+        <div id="deleteFolderDivForm">
+            {% include "apka/delete_directory.html" with directories=directories %}
+        </div>
+        <button class="btn"> delete </button>
+    </form>
+    <button type="button" class="btn cancel" onclick="closeDeleteFolderForm()">hide form</button>
+</div>
 
-{% include "apka/delete_file.html" with files=files %}
+<div class="form-popup" id="deleteFileDiv">
+    <b>Choose a file to delete:</b>
+    <form id="deleteFileForm" class="form-container" method="post" action="{% url 'delete_file' %}">
+        {% csrf_token %}
+        <div id="deleteFileDivForm">
+        {% include "apka/delete_file.html" %}
+        </div>
+        <button class="btn">delete</button>
+    </form>
+    <button type="button" class="btn cancel" onclick="closeDeleteFileForm()">hide form</button>
+</div>
 
 <script type="text/javascript">
     function openUploadFileForm() {
@@ -109,6 +115,32 @@
     function closeDeleteFileForm() {
         document.getElementById("deleteFileDiv").style.display = "none";
     }
+
+   // $('#runFrama').onclick(runAndRenderFrama());
+
+    function runAndRenderFrama() {
+        $.post(
+            "{% url 'run_frama_ajax' %}",
+            {"csrfmiddlewaretoken": "{{ csrf_token }}"},
+            function (response) {
+                // alert(response["result_tab"]);
+                $(".right-item").html(response["focus"]);
+                $("#tab-data").html(response["result_tab"]);
+            });
+    }
+
+    function renderAllForms() {
+        $.post(
+            "{% url 'render_all_forms' %}",
+            {"csrfmiddlewaretoken": "{{ csrf_token }}"},
+            function (response) {
+                $("#uploadFileDivForm").html(response["upload_file"]),
+                $("#uploadFolderDivForm").html(response["upload_dir"]),
+                $("#deleteFileDivForm").html(response["delete_file"]),
+                $("#deleteFolderDivForm").html(response["delete_dir"])
+            });
+    }
+
     $('#deleteFileForm').submit(function(event) {
         event.preventDefault();
         $.post(
@@ -117,6 +149,14 @@
             function (response) {
                 $(".side-nav").html(response);
             });
+        var data = {"csrfmiddlewaretoken": "{{ csrf_token }}"};
+        // $.post(
+        //     "{% url 'render_delete_file_form' %}",
+        //     data,
+        //     function(response) {
+        //         $("#deleteFileDivForm").html(response);
+        //     });
+        renderAllForms();
     })
 
     $("#deleteFolderForm").submit(function(event){
@@ -127,6 +167,14 @@
             function (response) {
                 $(".side-nav").html(response);
             });
+        // var data = {"csrfmiddlewaretoken": "{{csrf_token }}"};
+        // $.post(
+        //     "{% url 'render_delete_folder_form' %}",
+        //     data,
+        //     function(response) {
+        //         $("#deleteFolderDivForm").html(response);
+        //     });
+        renderAllForms();
     })
 
     $("#uploadFolderForm").submit(function(event){
@@ -138,6 +186,14 @@
                 // log the result
                 $(".side-nav").html(response);
             })
+        // var data = {"csrfmiddlewaretoken": "{{ csrf_token }}"};
+        // $.post(
+        //     "{% url 'render_folder_form' %}",
+        //     data,
+        //     function(response) {
+        //         $("#uploadFolderDivForm").html(response);
+        //     });
+        renderAllForms();
     })
 
     $('#uploadFileForm').submit(function(e) {
@@ -158,8 +214,30 @@
                 "X-CSRFToken": '{{ csrf_token }}'
             },
             enctype: 'multipart/form-data'
-        })
+        });
+        var data = {"csrfmiddlewaretoken": "{{ csrf_token }}"};
+        // $.post(
+        //     "{% url 'render_file_form' %}",
+        //     data,
+        //     function(response) {
+        //         $("#uploadFileDivForm").html(response);
+        //     });
+        renderAllForms();
     });
+
+    function openFile(file_pk) {
+        $.post(
+            "{% url 'open_file_ajax' %}",
+            {"file_pk" : file_pk, "csrfmiddlewaretoken": "{{ csrf_token }}"},
+            function(response) {
+                $(".left-item").html(response['code']);
+                $(".right-item").html(response['program_elements']);
+                if(response['tab_num'] == '3') {
+                    $(".tab-data").html(response['tabs']);
+                }
+            }
+        );
+    }
     // function runUploadFileForm() {
     //     var myForm = document.getElementById('uploadFileForm');
     //     var formData = new FormData(myForm);

@@ -1,12 +1,10 @@
-<div class="form-popup" id="deleteFolderDiv">
-    <b>Choose a directory to delete:</b>
-    <form id="deleteFolderForm" class="form-container" method="post" action="{% url 'delete_folder' %}">
-        {% csrf_token %}
+    <!-- <b>Choose a directory to delete:</b>
+    <form id="deleteFolderForm" class="form-container" method="post" action="{% url 'delete_folder' %}"> -->
+        <!-- {% csrf_token %} -->
         {% for directory in directories %}
             <input type="radio" name="directory_to_delete" id="directory{{ forloop.counter }}" value="{{ directory.id }}">
             <label for="directory{{ forloop.counter }}">{{ directory }}</label><br>
         {% endfor %}
-        <button class="btn"> delete </button>
-    </form>
-    <button type="button" class="btn cancel" onclick="closeDeleteFolderForm()">hide form</button>
-</div>
+        <!-- <button class="btn"> delete </button> -->
+    <!-- </form>
+    <button type="button" class="btn cancel" onclick="closeDeleteFolderForm()">hide form</button> -->

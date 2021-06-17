@@ -1,5 +1,8 @@
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.http import HttpResponse, HttpResponseRedirect
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseNotFound
 
 from .models import Directory, File, FileSection, SectionCategory, Status, StatusData
 from .forms import UploadFileModelForm, UploadDirectoryModelForm, ProverForm, VCForm
@@ -29,7 +32,6 @@ def add_sections(obj):
         regex_str += name
         index = index + 1
     regex_str += ")"
-    print(regex_str)
 
     description = ""
     section_object = None
@@ -60,6 +62,7 @@ def add_sections(obj):
                         status_data_fk = StatusData.objects.create(user=obj.owner),
                         status_fk = Status.objects.create()
                     )
+                    section_object.save()
                 else:
                     if section_object is not None:
                         section_object.desc += line
@@ -83,44 +86,26 @@ def open_file(request):
     request.session['file_id'] = file_pk        
     return {'file': current_file}
 
-# def upload_folder(request):
-#     if request.method == "POST":
-#         form = UploadDirectoryModelForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             form.save()
-#     form = UploadDirectoryModelForm()
-#     return render(request, 'apka/upload_directory.html', {'form' : form}) 
+def open_file_ajax(request):
+    if request.is_ajax and request.method == "POST":
+        file_pk = request.POST['file_pk']
+        f = File.objects.get(pk=file_pk)
+        focus_elements = render_to_string('apka/program_elements.html', {'file' : f})
+        result_tab = render_to_string('apka/render_result_tab.html', {'file' : f})
+        code = render_to_string('apka/file_contents.html', {'file' : f})
+        request.session['file_id'] = file_pk
+        tab_num = request.COOKIES.get('tab', 1) # jeśli nie jest ustawione ciasteczko to 1
+        return JsonResponse({'code' : code, 'program_elements' : focus_elements, 'tabs' : result_tab, 'tab_num' : tab_num})
 
-# def delete_file(request):
-#     files = File.objects.filter(is_available=True)
-#     if request.method == "POST":
-#         file_pk = request.POST.get('file_to_delete')
 
-#         file = File.objects.get(pk=file_pk)
-#         file.is_available = False
-#         file.save()
-#     return render(request, 'apka/delete_file.html', {'files' : files})
-
-# def delete_directory(request):
-#     directories = Directory.objects.filter(is_available=True)
-#     if request.method == "POST":
-#         dir_pk = request.POST.get('directory_to_delete')
-#         directory = Directory.objects.get(pk=dir_pk)
-#         directory.is_available = False
-#         directory.save()
-#     return render(request, 'apka/delete_directory.html', {'directories' : directories})
-
-# def choose_tab(request):
-#     current_tab = '1'
-#     if request.method =='GET':
-#         if 'tab' in request.COOKIES:
-#             current_tab = request.COOKIES['tab']
-#     elif request.method == 'POST':
-#         if 'tab' not in request.POST:
-#             current_tab = request.COOKIES['tab']
-#         else:
-#             current_tab = request.POST['tab']
-#     return {'tab' : current_tab}    
+# TODO usuń to pod spodem!!! (kopia już jest wyżej)
+def run_frama_ajax(request):
+    if request.is_ajax and request.method == "POST":
+        run_frama(request)
+        f = File.objects.get(pk=request.session['file_id'])
+        focus_elements = render_to_string('apka/program_elements.html', {'file' : f})
+        result_tab = render_to_string('apka/render_result_tab.html', {'file' : f})
+        return JsonResponse({'focus' : focus_elements, 'result_tab' : result_tab})
 
 def choose_tab(request):
     current_tab = '1'
@@ -134,9 +119,9 @@ def choose_tab(request):
             current_tab = request.POST['tab']
     return {'tab' : current_tab}
 
-def get_directory_tree(directory):
-    children = directory.directory_set.all()
-    files_in_dir = directory.file_set.all()
+def get_directory_tree(directory, request):
+    children = directory.directory_set.all().filter(owner=request.user)
+    files_in_dir = directory.file_set.all().filter(owner=request.user)
     if not children:
         # this folder has no children, recursion ends here
         return {'dir': directory, 'children': [], 'files': files_in_dir,}
@@ -144,34 +129,9 @@ def get_directory_tree(directory):
     # this folder has children, get every child's directory_tree
     return {
         'dir': directory,
-        'children': [get_directory_tree(child) for child in children],
+        'children': [get_directory_tree(child, request) for child in children],
         'files': files_in_dir,
     }
-
-def get_directory_tree_serialized(directory):
-    children = directory.directory_set.all()
-    files_in_dir = directory.file_set.all()
-
-    ser_files = serializers.serialize('json', files_in_dir, 
-        fields=('name', 'desc', 'frama_result', 'owner', 'is_available', 'directory')
-        )
-    ser_dir = serializers.serialize('json', [directory,])
-    ser_dir = ser_dir[1:-1]
-    print('ser dir:', ser_dir)
-    print('loads:', json.loads(ser_dir))
-
-    if not children:
-        # this folder has no children, recursion ends here
-        return {'dir': json.loads(ser_dir), 'children': serializers.serialize('json', []), 'files': ser_files}
-
-    # else, this folder has children, get every child's directory_tree
-    return {
-        'dir': json.loads(ser_dir),
-        'children': [get_directory_tree_serialized(child) for child in children], # serialized
-        'files': ser_files,
-    }
-
-
 
 def tabs(request):
     vc_list = []
@@ -208,6 +168,9 @@ def run_frama(request):
     print("run frama")
     file_pk = request.session['file_id']
     if file_pk != None:
+        if not File.objects.filter(pk=file_pk).exists():
+            print("error: file does not exist")
+            return
         file_obj = File.objects.get(pk=file_pk)
         file_path = [file_obj.file_field.path]
         default_params =  ["-wp", "-wp-print", "-wp-log=r:result.txt"]
@@ -251,29 +214,153 @@ def run_frama(request):
 
 def create_dir_structure(request):
     dir_tree_list = []
-    root_dirs = Directory.objects.filter(parent_dir=None)
-    parentless_files = File.objects.filter(directory=None)
+    root_dirs = Directory.objects.filter(parent_dir=None, owner=request.user)
+    parentless_files = File.objects.filter(directory=None, owner=request.user)
     for r_dir in root_dirs:
-        directory_tree = get_directory_tree(r_dir)
+        directory_tree = get_directory_tree(r_dir, request)
         dir_tree_list.append(directory_tree)
 
     return {'free_files' : parentless_files, 'tree_list' : dir_tree_list}
 
-def create_dir_structure_serialized(request):
-    dir_tree_list = []
-    root_dirs = Directory.objects.filter(parent_dir=None)
-    parentless_files = File.objects.filter(directory=None)
-    ser_parentless_files = serializers.serialize('json', parentless_files, 
-        fields=('name', 'desc', 'frama_result', 'owner', 'is_available', 'directory')
-        )
+def upload_file(request):
+    if request.is_ajax and request.method == "POST":
+        #get the form data 
+        form = UploadFileModelForm(request.POST, request.FILES, owner=request.user)
+        if form.is_valid():
+            file_obj = form.save()
+            file_obj.owner = request.user
+            file_obj.save()
+            add_sections(file_obj)
+            context = create_dir_structure(request)
+            return render(request, 'apka/show_folders.html', context)
+    return HttpResponseNotFound('<h1>Page not found</h1>')        
 
-    for r_dir in root_dirs:
-        directory_tree = get_directory_tree_serialized(r_dir)
-        dir_tree_list.append(directory_tree)
+def upload_folder(request):
+    if request.is_ajax and request.method == "POST":
+        form = UploadDirectoryModelForm(request.POST, request.FILES, owner=request.user)
+        if form.is_valid():
+            folder_obj = form.save()
+            folder_obj.owner = request.user
+            folder_obj.save()
+            context = create_dir_structure(request)
+            return render(request, 'apka/show_folders.html', context) 
+    return HttpResponseNotFound('<h1>Page not found</h1>')        
+
+
+def make_directory_unavailable(dir):
+    dir.is_available = False
+    for child_dir in dir.directory_set.all():
+        make_directory_unavailable(child_dir)
+    for f in dir.file_set.all():
+        f.is_available = False
+        f.save()
+    dir.save()
+
+def delete_folder(request):
+    if request.is_ajax and request.method == "POST":
+        dir_pk = request.POST.get('directory_to_delete')
+        directory = Directory.objects.get(pk=dir_pk)
+        make_directory_unavailable(directory)
+        context = create_dir_structure(request)
+        return render(request, 'apka/show_folders.html', context)
+    return HttpResponseNotFound('<h1>Page not found</h1>')        
+
+
+def delete_file(request):
+    print("delete file view ")
+    if request.is_ajax and request.method == "POST":
+        file_pk = request.POST.get('file_to_delete')
+        file = File.objects.get(pk=file_pk)
+        file.is_available = False
+        file.save()
+        context = create_dir_structure(request)
+        return render(request, 'apka/show_folders.html', context)
+    return HttpResponseNotFound('<h1>Page not found</h1>')        
+
+def render_file_form(request):
+    file_form = UploadFileModelForm(owner=request.user)
+    # return HttpResponse(file_form.as_p())
+    # zmiana po to żeby móc użyć render to string i móc wrzucić gdzieś do jsona:
+    return render_to_string('apka/render_file_form_trick.html', {'file_form' : file_form})
+
+def render_folder_form(request):
+    folder_form = UploadDirectoryModelForm(owner=request.user)
+    # return HttpResponse(folder_form.as_p())
+    return render_to_string('apka/render_folder_form_trick.html', {'folder_form' : folder_form})
+
+def render_delete_file_form(request):
+    files = File.objects.filter(is_available=True, owner=request.user) #files to show in delete file form
+    return render_to_string('apka/delete_file.html', {'files' : files})
+
+def render_delete_folder_form(request):
+    directories = Directory.objects.filter(is_available=True, owner=request.user) # folders to show in delete form
+    return render_to_string('apka/delete_directory.html', {'directories' : directories})
+
+def render_all_forms(request):
+    upload_dir = render_folder_form(request)
+    upload_file = render_file_form(request)
+    delete_file = render_delete_file_form(request)
+    delete_dir = render_delete_folder_form(request)
+    return JsonResponse({
+        'upload_dir' : upload_dir, 
+        'upload_file' : upload_file, 
+        'delete_file' : delete_file, 
+        'delete_dir' : delete_dir })
+
+def run_frama_ajax(request):
+    if request.is_ajax and request.method == "POST":
+        run_frama(request)
+        f = File.objects.get(pk=request.session['file_id'])
+        focus_elements = render_to_string('apka/program_elements.html', {'file' : f})
+        result_tab = render_to_string('apka/render_result_tab.html', {'file' : f})
+        return JsonResponse({'focus' : focus_elements, 'result_tab' : result_tab})
+
+@login_required
+def index(request):
+    print("INDEX")
+    context = {}
+    if request.method == "POST" and 'run' in request.POST:
+        run_frama(request)
+
+    context.update(create_dir_structure(request))
+    context.update(open_file(request))
+    context.update(choose_tab(request))
+    context.update(tabs(request))
+
+    file_form = UploadFileModelForm(owner=request.user)
+    folder_form = UploadDirectoryModelForm(owner=request.user)
+    directories = Directory.objects.filter(is_available=True, owner=request.user) # folders to show in delete form
+    files = File.objects.filter(is_available=True, owner=request.user) #files to show in delete file form
+
+    context.update({
+        'upload_file_form': file_form, 
+        'upload_folder_form' : folder_form, 
+        'directories' : directories,
+        'files' : files
+        })
+    
+    upload_file(request)
+    
+    response = render(request, 'apka/index.html', context)
+    response.set_cookie('tab', context['tab'])
+    return response
+
+
+# def create_dir_structure_serialized(request):
+#     dir_tree_list = []
+#     root_dirs = Directory.objects.filter(parent_dir=None)
+#     parentless_files = File.objects.filter(directory=None)
+#     ser_parentless_files = serializers.serialize('json', parentless_files, 
+#         fields=('name', 'desc', 'frama_result', 'owner', 'is_available', 'directory')
+#         )
+
+#     for r_dir in root_dirs:
+#         directory_tree = get_directory_tree_serialized(r_dir)
+#         dir_tree_list.append(directory_tree)
         
 
-    print("REAL dictionary:", {'free_files' : ser_parentless_files, 'tree_list' : dir_tree_list})
-    return {'free_files' : ser_parentless_files, 'tree_list' : dir_tree_list}
+#     print("REAL dictionary:", {'free_files' : ser_parentless_files, 'tree_list' : dir_tree_list})
+#     return {'free_files' : ser_parentless_files, 'tree_list' : dir_tree_list}
 
 # def upload_file(request):
 #     if request.method == "POST":
@@ -290,8 +377,8 @@ def create_dir_structure_serialized(request):
 #         print(form)
 #         if form.is_valid():
 #             print("valid\n")
-#             file_obj = form.save() # TODO ODKOMENTUJ
-#             add_sections(file_obj) # TODO ODKOMENTUJ DEBUG
+#             file_obj = form.save() 
+#             add_sections(file_obj)
 #             dict = create_dir_structure_serialized(request)
 #             print(dict['free_files'])
 #             print('\n\ntree list:\n')
@@ -304,81 +391,3 @@ def create_dir_structure_serialized(request):
 #             return JsonResponse(create_dir_structure_serialized(request), safe=False)
 #         else:
 #             return JsonResponse({'ulala' : 'siabadabadu', 'message' : 'huhuhuhu'})
-
-def upload_file(request):
-    if request.is_ajax and request.method == "POST":
-        #get the form data 
-        form = UploadFileModelForm(request.POST, request.FILES)
-        if form.is_valid():
-            print("valid\n")
-            form.save()
-            add_sections(file_obj)
-            context = create_dir_structure(request)
-            return render(request, 'apka/show_folders.html', context)
-
-def upload_folder(request):
-    if request.is_ajax and request.method == "POST":
-        form = UploadDirectoryModelForm(request.POST, request.FILES)
-        if form.is_valid():
-            print("valid!!!\n")
-            form.save()
-            context = create_dir_structure(request)
-            return render(request, 'apka/show_folders.html', context) 
-        else:
-            print("not valid\n")
-
-def delete_folder(request):
-    if request.is_ajax and request.method == "POST":
-        dir_pk = request.POST.get('directory_to_delete')
-        directory = Directory.objects.get(pk=dir_pk)
-        directory.is_available = False
-        directory.save()
-        context = create_dir_structure(request)
-        return render(request, 'apka/show_folders.html', context)
-
-def delete_file(request):
-    if request.is_ajax and request.method == "POST":
-        file_pk = request.POST.get('file_to_delete')
-        file = File.objects.get(pk=file_pk)
-        file.is_available = False
-        file.save()
-        context = create_dir_structure(request)
-        return render(request, 'apka/show_folders.html', context)
-
-# def render_file_form(request):
-#     file_form = UploadFileModelForm()
-#     return 
-
-def index(request):
-    print("INDEX")
-    context = {}
-    if request.method == "POST" and 'run' in request.POST:
-        run_frama(request)
-
-    context.update(create_dir_structure(request))
-    context.update(open_file(request))
-    context.update(choose_tab(request))
-    context.update(tabs(request))
-
-    file_form = UploadFileModelForm()
-    folder_form = UploadDirectoryModelForm(request.POST, request.FILES)
-    directories = Directory.objects.filter(is_available=True) # folders to show in delete form
-    files = File.objects.filter(is_available=True) #files to show in delete file form
-
-
-
-    context.update({
-        'upload_file_form': file_form, 
-        'upload_folder_form' : folder_form, 
-        'directories' : directories,
-        'files' : files
-        })
-    
-    upload_file(request)
-
-
-            
-    response = render(request, 'apka/index.html', context)
-    response.set_cookie('tab', context['tab'])
-    return response
-

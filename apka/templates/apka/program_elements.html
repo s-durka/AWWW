@@ -1,13 +1,22 @@
 {% for section in file.filesection_set.all %}
-    <!-- <p>{{sec.description}}</p> -->
-    {% if section.status_data_fk.status_data != None %}
+    {% if section.status_data_fk.validity_flag and section.status_data_fk.status_data != "" %}
         <div class={{section.status_fk.status}}>
-            <p>Prover: {{ section.status_data_fk.prover }}</p>
-            <div class="status">{{section.status_data_fk.status_data|linebreaks}}
+            <div id="section{{section.pk}}">
+                <p>Prover: {{section.status_data_fk.prover }}</p>
+                <p>line: {{section.line}} {{section.category}}</p>
+            </div>
+            <div id="status{{section.pk}}" class="status">{{section.status_data_fk.status_data|linebreaks}}
                 <span class="statustext">
                     line: {{section.line}}{{section.desc|linebreaks}}
                 </span>
             </div>
         </div>
-    {%endif%}    
+        <script>
+            $(document).ready(function() {
+                $("#section{{section.pk}}").click(function() {
+                    $("#status{{section.pk}}").toggle();
+                });
+            });
+        </script>
+    {%endif%}
 {% endfor %}

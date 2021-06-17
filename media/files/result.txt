@@ -1,0 +1,4 @@
+[wp] [Alt-Ergo] Goal typed_max_post : Unknown (Qed:6ms) (103ms)
+[wp] Proved goals:    4 / 5
+Qed:             3  (0.35ms-7ms-15ms)
+Alt-Ergo:        1  (344ms) (1033) (unknown: 1)

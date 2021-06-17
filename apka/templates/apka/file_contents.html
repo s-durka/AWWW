@@ -1,0 +1,8 @@
+{% if file != None %}
+    <h3>{{file.name}}</h3>
+    {% if file.description %}
+        <p>Description: {{file.description}}</p>
+    {% endif %}    
+    <!-- <p>Created: {{file.creation_date}}</p> -->
+    <pre>{{file.display_text}}</pre>
+{% endif %}

@@ -8,10 +8,8 @@
         
             {% for f in tree.files %}
                 {% if f.is_available %}
-                    <li> <form method=POST>
-                        {% csrf_token %}
-                        <button type="submit" name="file_id" value={{f.pk}}>📄{{f.name}}</button>
-                    </form>
+                    <li>
+                        <button type="submit" name="file_id" value={{f.pk}}  onclick=openFile(this.value)>📄{{f.name}}</button>                   
                     </li>
                 {% endif %}    
             {% endfor %}

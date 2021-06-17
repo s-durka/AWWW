@@ -70,12 +70,15 @@ ul {
 }
 
 nav.upper-nav {
+    flex-direction: row;
     display: flex;
     height: 10%;
     flex-wrap: wrap;
     align-content: space-around;
     width: 100%;
     background-color: var(--second-color);
+    overflow: hidden;
+    clear: both;
 }
 
 input:focus,
@@ -99,6 +102,15 @@ nav.upper-nav a,nav.upper-nav button, input[type=submit] {
   margin: 10px;
   padding: 10px;
   border-radius: 25px;
+}
+
+nav.upper-nav > a {
+  text-decoration: none;
+  float: right;
+  overflow: hidden;
+  justify-content: flex-end;
+  color: black;
+  background-color: white;
 }
 
 nav.side-nav > ul, li, div {
